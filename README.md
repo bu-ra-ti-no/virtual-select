@@ -12,3 +12,9 @@
 | toggleDropDown()         |      function        |
 | render()                 |      function        |
 | ensureVisible(index)     |      function        |
+
+### Events
+- beforeopen
+- beforechange `{cancelable: true, detail: { index }}`
+- change
+- paint `{detail: {index, value, canvas, box: { y, width, height }}}`
