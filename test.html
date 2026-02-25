@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>virtual-select test</title>
+  <script src="virtual-select.js"></script>
+  <style>
+    body {
+      padding: 50px;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    #output {
+      color: darkgreen;
+      width: fit-content;
+      transition: background-color 200ms;
+    }
+
+    #output.new {
+      background-color: yellow;
+    }
+
+    button {
+      width: 200px;
+    }
+
+    #draggable {
+      position: relative;
+      cursor: move;
+      background-color: #b0dab1;
+      width: fit-content;
+    }
+
+    virtual-select {
+      margin: 2em 0.5em 0.5em 0.5em;
+    }
+
+    #count {
+      pointer-events: none;
+      font-size: smaller;
+      color: darkgreen;
+      position: absolute;
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Virtual-Select</h2>
+
+    <div id="output">&nbsp;</div>
+
+    <div id="draggable">
+      <span id="count">0 items</span>
+      <virtual-select
+        id="mySelect" style="cursor: default"
+        placeholder="Select one item..."
+        onchange="changeHandler(event)">
+      </virtual-select>
+    </div>
+    <label>
+      dropDownWidth:
+      <input type="range" style="width: 300px" max="1400" value="350" onchange="ddChange(event)">
+    </label>
+    <label>
+      <input type="checkbox" name="disabled" onchange="disabledChange(event)">
+      disabled
+    </label>
+    <button onclick="addManyItems()">Add 1000 elements</button>
+    <button onclick="getSelected()">Get the selected one</button>
+  </div>
+
+  <script>
+    const select = document.getElementById('mySelect');
+    setTimeout(() => select.placeholder = 'Select an item from the list...', 2000);
+
+    select.addEventListener('beforeopen', beforeOpenHandler);
+    select.addEventListener('beforechange', beforeChangeHandler);
+    select.addEventListener('paint', paintHandler);
+
+    function log(message) {
+      const output = document.getElementById('output');
+      output.textContent = message;
+      output.classList.add('new');
+      setTimeout(() => output.classList.remove('new'), 200);
+    }
+
+    function ddChange(event) {
+      const value = parseInt(event.target.value);
+      select.dropDownWidth = value;
+      log('dropDownWidth = ' + value);
+    }
+
+    function disabledChange(event) {
+      select.disabled = event.target.checked;
+    }
+
+    function changeHandler(event) {
+      const elem = event.target;
+      log(`Selected: ${elem.selectedValue} [index: ${elem.selectedIndex}]`);
+    }
+
+    function beforeOpenHandler() {
+      log('beforeopen!');
+    }
+
+    function beforeChangeHandler(event) {
+      const { index } = event.detail;
+      if (index % 7 === 1) event.preventDefault(); // reject selection!
+    }
+
+    function paintHandler(event) {
+      const {index, value: item, canvas, box} = event.detail;
+      if (index % 7 === 1) {
+        const { width } = canvas.measureText(item.toString());
+        const color = index === select.selectedIndex ? 'white' : 'gray';
+        canvas.strokeStyle = color;
+        canvas.beginPath();
+        const y = box.y + box.height / 2 + 0.5;
+        canvas.moveTo(3, y);
+        canvas.lineTo(6 + width, y);
+        canvas.stroke();
+        canvas.fillStyle = color;
+        if (index & 1) {
+          canvas.fillText('🙂  '.repeat(5), 6, y);
+          event.preventDefault(); // do not print text
+        }
+      }
+    }
+
+    function addManyItems() {
+      const items = select.items;
+      items.push(`Item #${items.length + 1} - short name`);
+      for (let i = 2; i <= 1000; i++) {
+        items.push({
+          value: items.length,
+          toString() {
+            return `Element #${this.value} - long name for checking text trimming in virtual select`;
+          }
+        });
+      }
+      document.getElementById('count').textContent = `${select.items.length} items`;
+    }
+
+    function getSelected() {
+      alert(`Selected: ${JSON.stringify(select.selectedValue, null, 4)}`);
+    }
+
+    const draggable = document.getElementById('draggable');
+    draggable.onmousedown = function(event) {
+        if (event.target !== event.currentTarget) return;
+
+        const dx = event.clientX - parseInt(draggable.style.left || '0');
+        const dy = event.clientY - parseInt(draggable.style.top || '0');
+
+        function onMouseMove(event) {
+            draggable.style.left = event.pageX - dx + 'px';
+            draggable.style.top = event.pageY - dy + 'px';
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+
+        draggable.onmouseup = function() {
+            document.removeEventListener('mousemove', onMouseMove);
+            draggable.onmouseup = null;
+        };
+    };
+    draggable.ondragstart = function() {
+        return false;
+    };
+
+  </script>
+</body>
+</html>
