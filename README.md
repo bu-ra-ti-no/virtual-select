@@ -3,9 +3,11 @@
 | items                    | string[] or object[] |
 | placeholder  [prop/attr] |      string          |
 | disabled     [prop/attr] |      boolean         |
+| visibleItems             |      number          |
 | dropDownWidth            |      number          |
 | selectedIndex            |      number          |
 | selectedValue            |  string or object    |
+| isOpen        [readonly] |      boolean         |
 |                          |                      |
 | showDropDown()           |      function        |
 | closeDropDown()          |      function        |
